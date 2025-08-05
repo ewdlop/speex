@@ -46,6 +46,9 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnableManifest>true</VcpkgEnableManifest>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -112,6 +115,7 @@
     <ClCompile Include="..\speexdsp-1.2rc3\libspeexdsp\resample.c" />
     <ClCompile Include="..\speexdsp-1.2rc3\libspeexdsp\scal.c" />
     <ClCompile Include="..\speexdsp-1.2rc3\libspeexdsp\smallft.c" />
+    <ClCompile Include="test.cpp" />
     <ClCompile Include="testecho_mono.cpp" />
   </ItemGroup>
   <ItemGroup>

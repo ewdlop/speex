@@ -122,6 +122,9 @@
     <ClCompile Include="..\speexdsp-1.2rc3\libspeexdsp\smallft.c">
       <Filter>libspeexdsp</Filter>
     </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\speexdsp-1.2rc3\libspeexdsp\echo_diagnostic.m">
