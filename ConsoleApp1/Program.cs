@@ -17,9 +17,9 @@ if (File.Exists(wavFile))
 if (File.Exists(pcmFile))
 {
     Console.WriteLine("Playing raw PCM file...");
-    //PlayRawPcm(pcmFile, 48000, 1, 16); // 48kHz, mono, 16-bit
-    _ = Task.Run(() => PlayRawPcm(pcmFile2, 48000, 1, 16));
-    _ = Task.Run(() => PlayRawPcm(pcmFile3, 48000, 1, 16));
+    PlayRawPcm(pcmFile, 48000, 1, 16); // 48kHz, mono, 16-bit
+    //_ = Task.Run(() => PlayRawPcm(pcmFile2, 48000, 1, 16));
+    //_ = Task.Run(() => PlayRawPcm(pcmFile3, 48000, 1, 16));
 }
 Console.ReadLine();
 
