@@ -1,12 +1,12 @@
-﻿/**************************************************   
-Author   : ZL Guo   
+﻿/**************************************************   
+Author   : ZL Guo   
 Email    : 1799580752@qq.com
-TechBlog : https://www.jianshu.com/u/b971a1d12a6f  
-Description: 
-本程序主要用于利用speex进行单声道的回声消除测试。
-主要包括两大部分。
-1. 针对多个分辨率进行回声消除，分为8k 16k 32k 48k
-2. 测试收敛时间  
+TechBlog : https://www.jianshu.com/u/b971a1d12a6f  
+Description: 
+This program is mainly used for mono echo cancellation testing using speex.
+It mainly includes two parts:
+1. Echo cancellation for multiple resolutions: 8k 16k 32k 48k
+2. Convergence time testing  
 **************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -18,9 +18,10 @@ Description: 
 #include <tchar.h>
 #include "arch.h"
 #include <windows.h>
+#include <direct.h>  // For _mkdir
 
 #ifdef __cplusplus  
-extern "C" {    //如果被C++文件引用
+extern "C" {    // If referenced by C++ files
 #endif
 
 #include "speex/speex_echo.h"
@@ -45,10 +46,10 @@ int main(int argc, char **argv)
 	FILE *echo_fd, *ref_fd, *e_fd;
 	SpeexEchoState *st;
 	SpeexPreprocessState *den;
-	int sampleRate = 48000; // 提供了8000 16000 32000 48000的测试样本
+	int sampleRate = 48000; // Provided test samples: 8000 16000 32000 48000
 
-	int nFrameSizeInMS = 10;  // 每次取多少毫秒的数据进行处理
-	int nFilterLenInMS = 120; // 滤波器长度为多少毫秒
+	int nFrameSizeInMS = 10;  // How many milliseconds of data to process each time
+	int nFilterLenInMS = 120; // Filter length in milliseconds
 
 	SYSTEMTIME sysTime;
 	::GetLocalTime(&sysTime);
@@ -60,8 +61,8 @@ int main(int argc, char **argv)
 	char szRefFileName[512]    = {0};
 
 #if 1
-	// test 1 : 多采样率测试
-	// 这里给出的micin 和 speaker的数据是完全对齐的
+	// test 1: Multi-sampling rate testing
+	// The micin and speaker data provided here are completely aligned
 	if (kePxSampleRateFreq_8k == sampleRate)
 	{
 		sprintf(szEchoFileName, "%s", "micin_8k_s16_mono.pcm");
@@ -84,8 +85,8 @@ int main(int argc, char **argv)
 	}
 
 #else 
-	// test 2 : 测试收敛速度
-	// 用同一个文件测试 看什么时候开始输出连续的静音 就是收敛了
+	// test 2: Test convergence speed
+	// Use the same file for testing to see when continuous silence starts outputting, indicating convergence
 	if (kePxSampleRateFreq_8k == sampleRate)
 	{
 		sprintf(szEchoFileName, "%s", "speaker_8k_s16_mono.pcm");
@@ -108,6 +109,9 @@ int main(int argc, char **argv)
 	}
 #endif 
 
+	// Create output directory if it doesn't exist
+	_mkdir(".\\output");
+
 	char szOutputFileName[512];
 	sprintf(szOutputFileName, ".\\output\\mono_%s_%s_%04d%02d%02d_%02d%02d%02d.pcm",
 		szEchoFileName, szRefFileName,
@@ -115,9 +119,28 @@ int main(int argc, char **argv)
 		sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 	printf("%s\n", szOutputFileName);
 
+	// Open input files with error checking
 	ref_fd  = fopen(szEchoFileName,   "rb");
+	if (!ref_fd) {
+		printf("Error: Cannot open input file %s\n", szEchoFileName);
+		return -1;
+	}
+
 	echo_fd = fopen(szRefFileName,    "rb");
-	e_fd    = fopen(szOutputFileName, "wb");
+	if (!echo_fd) {
+		printf("Error: Cannot open input file %s\n", szRefFileName);
+		fclose(ref_fd);
+		return -1;
+	}
+
+	// Open output file with error checking
+	e_fd = fopen(szOutputFileName, "wb");
+	if (!e_fd) {
+		printf("Error: Cannot create output file %s\n", szOutputFileName);
+		fclose(ref_fd);
+		fclose(echo_fd);
+		return -1;
+	}
 
 	short *echo_buf; 
 	short *ref_buf;  
@@ -127,10 +150,10 @@ int main(int argc, char **argv)
 	ref_buf  = new short[frame_size];
 	e_buf    = new short[frame_size];
 
-	// 非常重要的函数 直接影响收敛速度
-	// TAIL越小，收敛速度越快，但对近端数据和远端数据的同步要求提高
-	// 比如TAIL设置为100ms的samples，那么如果near和far数据相差超过100ms，则无法消除
-	// TAIL过大, 收敛速度变慢，且可能造成滤波器不稳定
+	// Very important function that directly affects convergence speed
+	// Smaller TAIL leads to faster convergence, but requires higher synchronization between near-end and far-end data
+	// For example, if TAIL is set to 100ms samples, echo cannot be eliminated if near and far data differ by more than 100ms
+	// Too large TAIL slows convergence and may cause filter instability
 	st  = speex_echo_state_init(frame_size, filter_length); 
 	                                       
 	den = speex_preprocess_state_init(frame_size, sampleRate);
@@ -149,9 +172,9 @@ int main(int argc, char **argv)
 		fread(ref_buf,  sizeof(short), frame_size, ref_fd);
 		fread(echo_buf, sizeof(short), frame_size, echo_fd);
 
-		// ref_buf  : 从speaker处获取到的数据  
-		// echo_buf : 从麦克采集到的数据 
-		// e_buf    : 回声消除后的数据  
+		// ref_buf  : Data obtained from speaker  
+		// echo_buf : Data collected from microphone 
+		// e_buf    : Data after echo cancellation  
 		speex_echo_cancellation(st, ref_buf, echo_buf, e_buf);
 		speex_preprocess_run(den, e_buf);
 		fwrite(e_buf, sizeof(short), frame_size, e_fd);
